@@ -1,0 +1,39 @@
+<div class="teleprompter-container flex flex-col h-screen">
+      <div class="settings-panel p-5 flex flex-col gap-4 border-b border-base-300">
+        <textarea class="textarea textarea-bordered w-full h-32" [(ngModel)]="text" (input)="onTextChange()" placeholder="Enter your text here"></textarea>
+        <div class="settings-controls flex flex-col sm:flex-row gap-4 items-center">
+          <div class="flex items-center gap-2">
+            <label for="speed" class="label">Speed:</label>
+            <input type="range" id="speed" min="1" max="20" [(ngModel)]="speed" (input)="onSpeedChange($event)" class="range" />
+          </div>
+          <div class="flex items-center gap-2">
+            <label for="fontFamily" class="label">Font:</label>
+            <select id="fontFamily" [(ngModel)]="fontFamily" (change)="onFontChange($event)" class="select select-bordered w-full max-w-xs">
+              <option value="Arial">Arial</option>
+              <option value="Verdana">Verdana</option>
+              <option value="Times New Roman">Times New Roman</option>
+              <option value="Courier New">Courier New</option>
+            </select>
+          </div>
+          <div class="flex items-center gap-2">
+            <label for="fontSize" class="label">Font Size:</label>
+            <input type="number" id="fontSize" min="12" max="72" [(ngModel)]="fontSize" (input)="onFontSizeChange($event)" class="input input-bordered w-24" />
+          </div>
+        </div>
+        <div class="flip-controls flex gap-2">
+          <button class="btn btn-sm" [class.btn-primary]="isFlippedHorizontal" (click)="toggleFlipHorizontal()">Flip Horizontal</button>
+          <button class="btn btn-sm" [class.btn-primary]="isFlippedVertical" (click)="toggleFlipVertical()">Flip Vertical</button>
+        </div>
+        <div class="playback-controls flex gap-2">
+          <button class="btn btn-sm btn-primary" (click)="startScrolling()" [disabled]="isPlaying">Play</button>
+          <button class="btn btn-sm" (click)="stopScrolling()" [disabled]="!isPlaying">Pause</button>
+          <button class="btn btn-sm" (click)="resetScrolling()">Reset</button>
+        </div>
+      </div>
+      <div #teleprompterDisplay class="teleprompter-display flex-1 p-5 overflow-y-auto whitespace-pre-wrap text-center"
+        [style.fontFamily]="fontFamily"
+        [style.fontSize.px]="fontSize"
+        [style.transform]="(isFlippedHorizontal ? 'scaleX(-1)' : '') + (isFlippedVertical ? ' scaleY(-1)' : '')">
+        {{ text }}
+      </div>
+    </div>
