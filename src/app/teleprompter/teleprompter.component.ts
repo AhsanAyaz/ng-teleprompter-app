@@ -12,7 +12,7 @@ import { Component, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/co
       @ViewChild('teleprompterDisplay') teleprompterDisplay!: ElementRef;
 
       text = '';
-      speed = 10;
+      speed = 0.2;
       fontFamily = 'Arial';
       fontSize = 32;
       isFlippedHorizontal = false;
@@ -21,6 +21,7 @@ import { Component, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/co
       scrollInterval: any;
       lastScrollPosition = 0;
       wakeLockSentinel: any = null;
+      animationFrameId: any;
 
       ngOnInit(): void {
         this.loadSettings();
@@ -36,7 +37,7 @@ import { Component, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/co
         if (savedSettings) {
           const settings = JSON.parse(savedSettings);
           this.text = settings.text || '';
-          this.speed = settings.speed || 10;
+          this.speed = settings.speed || 0.2;
           this.fontFamily = settings.fontFamily || 'Arial';
           this.fontSize = settings.fontSize || 32;
           this.isFlippedHorizontal = settings.isFlippedHorizontal || false;
@@ -80,20 +81,33 @@ import { Component, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/co
         if (this.isPlaying) return;
         this.isPlaying = true;
         this.requestWakeLock();
-        this.scrollInterval = setInterval(() => {
-          if (this.teleprompterDisplay) {
-            this.lastScrollPosition += this.speed;
-            this.teleprompterDisplay.nativeElement.scrollTop = this.lastScrollPosition;
-            if (this.teleprompterDisplay.nativeElement.scrollTop + this.teleprompterDisplay.nativeElement.clientHeight >= this.teleprompterDisplay.nativeElement.scrollHeight) {
-              this.stopScrolling();
-            }
+        this.animateScroll();
+      }
+
+      animateScroll(): void {
+        const scrollStep = this.speed;
+        const scroll = () => {
+          if (!this.isPlaying || !this.teleprompterDisplay) {
+            return;
           }
-        }, 100);
+          this.lastScrollPosition += scrollStep;
+          this.teleprompterDisplay.nativeElement.scrollTop = this.lastScrollPosition;
+          if (this.teleprompterDisplay.nativeElement.scrollTop + this.teleprompterDisplay.nativeElement.clientHeight >= this.teleprompterDisplay.nativeElement.scrollHeight) {
+            this.stopScrolling();
+            this.resetScrolling();
+          } else {
+            this.animationFrameId = requestAnimationFrame(scroll);
+          }
+        };
+        this.animationFrameId = requestAnimationFrame(scroll);
       }
 
       stopScrolling(): void {
         this.isPlaying = false;
-        clearInterval(this.scrollInterval);
+        if (this.animationFrameId) {
+          cancelAnimationFrame(this.animationFrameId);
+          this.animationFrameId = null;
+        }
         this.releaseWakeLock();
       }
 
@@ -110,7 +124,7 @@ import { Component, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/co
       }
 
       onSpeedChange(event: any): void {
-        this.speed = parseInt(event.target.value, 10);
+        this.speed = parseFloat(event.target.value);
         this.saveSettings();
       }
 
@@ -132,5 +146,11 @@ import { Component, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/co
       toggleFlipVertical(): void {
         this.isFlippedVertical = !this.isFlippedVertical;
         this.saveSettings();
+      }
+
+      onScroll(event: any): void {
+        if (this.isPlaying) {
+          this.lastScrollPosition = this.teleprompterDisplay.nativeElement.scrollTop;
+        }
       }
     }
